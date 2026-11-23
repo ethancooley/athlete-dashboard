@@ -22,7 +22,7 @@ export function RunDetail({ run, band }) {
   const opt = useMemo(() => (d && d.points && d.points.length > 2 ? runOption(d.points, band || undefined) : null), [d]);
   if (err) return <div className="empty">{err}</div>;
   if (!d) return <div className="skeleton" style={{ height: 380 }} />;
-  const s = d.session || {}, laps = parseLaps(d.laps);
+  const s = d.session || {}, laps = d.lapRows && d.lapRows.length ? d.lapRows : parseLaps(d.laps);
   return (
     <div>
       <div className="lab-head"><h4>{run.name}</h4><span>{run.date ? shortDate(run.date) : ""}{run.mi > 0 ? " · " + f1(run.mi) + " mi · " + hms(run.sec) + " · " + paceMi(run.sec / run.mi) + "/mi" : ""}</span></div>
@@ -37,7 +37,7 @@ export function RunDetail({ run, band }) {
         <div className="p" style={{ gridColumn: "span 12" }}><h3>Pace, heart rate and elevation <small>{band ? "shaded = goal pace (" + paceMi(band[0]) + " to " + paceMi(band[1]) + "/mi)" : ""}</small></h3>
           {opt ? <EChart option={opt} height={360} /> : <div className="empty">No stream data for this run{d.streamStatus ? " (" + d.streamStatus + ")" : ""}.</div>}</div>
         <div className="p s7"><h3>Splits</h3><div className="tw"><table><thead><tr><th>#</th><th>Mi</th><th>Time</th><th>Pace</th><th>HR avg / max</th><th>Cadence</th></tr></thead>
-          <tbody>{laps.length ? laps.map((l) => <tr key={l.n}><td>{l.n}</td><td>{l.mi.toFixed(2)}</td><td>{l.dur}</td><td>{paceMi(l.pace)}</td><td>{l.hr} / {l.maxhr}</td><td>{l.cad}</td></tr>) : <tr><td colSpan="6" className="empty">No laps recorded</td></tr>}</tbody></table></div></div>
+          <tbody>{laps.length ? laps.map((l) => <tr key={l.n}><td>{l.n}</td><td>{l.mi.toFixed(2)}</td><td>{l.dur}</td><td>{paceMi(l.pace)}</td><td>{l.hr != null ? l.hr + (l.maxhr != null ? " / " + l.maxhr : "") : "-"}</td><td>{l.cad != null ? l.cad : "-"}</td></tr>) : <tr><td colSpan="6" className="empty">No laps recorded</td></tr>}</tbody></table></div></div>
         <div className="p s5"><h3>Time in heart-rate zones</h3>
           {d.zones ? Object.keys(d.zones).sort().map((k) => <div className="zrow" key={k}><span>{k.toUpperCase()}</span><div className="zbar"><i style={{ width: d.zones[k].pct + "%" }} /></div><span>{d.zones[k].time} · {d.zones[k].pct}%</span></div>) : <div className="empty">No zone data</div>}</div>
       </div>
