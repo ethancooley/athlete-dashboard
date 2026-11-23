@@ -59,7 +59,8 @@ Tables are created automatically on first use. Run `PGLITE=1 MOCK=1 npm run dev`
 | Key | Meaning |
 |---|---|
 | `timezone` | IANA zone used to decide what "today" is |
-| `historyStart` | First date to load (default: the last 60 days) |
+| `historyStart` | Where the History backfill starts (set in Admin) |
+| `liveDays` | Recent days the live dashboard loads on each refresh (default 60) |
 | `trainStart` | Start of the build, used for the countdown bar (default: first plan day) |
 | `event` | `name`, `date`, `goalTime`, `goalPace` (per mile), `distanceKm`, optional `lede` |
 | `anchor` | A recent race result (`label`, `name`, `seconds`, `distanceKm`). Enables the Riegel projection |
