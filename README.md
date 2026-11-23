@@ -20,13 +20,13 @@ npm install
 MOCK=1 DASH_PASSWORD=demo SESSION_SECRET=$(openssl rand -hex 32) npm run dev
 ```
 
-Open http://localhost:3000 and sign in with `demo`. You will see a generated sample plan and synthetic training data.
+Open http://localhost:3000 and sign in with `demo`. You will see a generated sample plan and synthetic training data. A fresh install with no plan in the database shows the same sample plan.
 
 ## Use your own data
 
-1. **Plan and event.** Copy `config/athlete.config.example.json` to `config/athlete.config.json` and
-   `config/plan.example.json` to `config/plan.json`, then edit them. Both files are git-ignored.
-   On a host such as Vercel, put the same JSON in the `ATHLETE_CONFIG` and `PLAN_JSON` environment variables instead.
+1. **Global settings.** Copy `config/athlete.config.example.json` to `config/athlete.config.json` and edit it (git-ignored).
+   On a host such as Vercel, put the same JSON in the `ATHLETE_CONFIG` environment variable instead.
+   Your event, goal and plan are not in config: they live in the database, per training block (see below).
 2. **Data source.** The included provider reads from an [athletedata](https://athletedata.com) MCP server. Set
    `ATHLETEDATA_MCP_URL` (and `ATHLETEDATA_MCP_TOKEN` if you have one). To use another source, implement
    `getDashboard` and `getActivity` in `lib/providers/` (the shapes are described in `lib/providers/index.js`) and select it there.
@@ -34,14 +34,15 @@ Open http://localhost:3000 and sign in with `demo`. You will see a generated sam
 
 Copy `.env.example` to `.env.local` and fill it in.
 
-## History and records (needs Postgres)
+## Plans, history and records (needs Postgres)
 
-The live dashboard reads straight from your data source. History and Records read from a Postgres database that a sync keeps current.
+The live dashboard reads training data straight from your data source. Plans, blocks, races, History and Records live in a Postgres database that a sync keeps current.
+The dashboard shows the latest plan version of the block whose dates contain today (failing that the next upcoming block, then the most recent). Starting a new block is one import: no environment variable or redeploy.
 
 1. Add a Postgres database. On Vercel, Storage > Create Database > Neon, connected to the project. That sets `DATABASE_URL`. Locally, set `DATABASE_URL` yourself.
 2. Set `CRON_SECRET` to a random string. Vercel Cron (see `vercel.json`) calls `/api/cron/sync` nightly to refresh the last 14 days and best efforts.
 3. Open `/admin`, enter the date your history starts, and run the backfill. It loads one month at a time and is safe to repeat.
-4. In `/admin`, import your blocks, races and plans as JSON:
+4. In `/admin`, import your blocks, races and plans as JSON (a full example is in `config/import.example.json`):
 
 ```json
 {
@@ -51,10 +52,17 @@ The live dashboard reads straight from your data source. History and Records rea
 }
 ```
 
+A block can carry `settings` (`event`, `anchor`, `gates`, `goalPaceBand`, `trainStart`, described below) that apply while it is the active block, so each build has its own goal.
 `source` is `official` or `watch`. A race without a `time_sec` and `planned: true` shows under Upcoming. Re-importing a changed plan stores a new version and keeps the old one. A block without a `start` is shown with an estimated 16-week window and flagged as estimated.
+**Editing a plan.** `/admin` has a plan editor: pick a block and week, change miles, workout, type or tag, and save. Every save is a new version; History keeps the old ones and you can restore any of them.
+
+**Closing a block.** The nightly job looks at each past race that has no time, takes the time from the run on race day that matches the distance, then writes the block's result if it is empty. Nothing already filled in is overwritten (the Admin page has a Run now button).
+
 Tables are created automatically on first use. Run `PGLITE=1 MOCK=1 npm run dev` to try the whole thing locally with an in-process database and synthetic data (demo mode also loads synthetic blocks).
 
 ## Configuration
+
+Global keys go in `ATHLETE_CONFIG` or `config/athlete.config.json`. `event`, `anchor`, `gates`, `goalPaceBand` and `trainStart` can also be set per block (a block's value wins while it is active).
 
 | Key | Meaning |
 |---|---|

@@ -71,7 +71,7 @@ function RunDetail({ run, band }) {
   );
 }
 
-export default function Dashboard({ plan, cfg }) {
+export default function Dashboard({ plan, cfg, planInfo }) {
   const [data, setData] = useState(null), [err, setErr] = useState(""), [busy, setBusy] = useState(false), [sel, setSel] = useState(null);
   const load = useCallback(async (refresh) => {
     setBusy(true);
@@ -121,6 +121,7 @@ export default function Dashboard({ plan, cfg }) {
       {nav}
       <main className="wrap">
         {err && <div className="banner warn">{err}{data.stale ? " Showing the last good data." : ""}</div>}
+        {planInfo && planInfo.error && <div className="banner err">Could not read the plan from the database, so a sample plan is shown. {planInfo.error}</div>}
         {data.source === "demo" && <div className="banner">Demo mode: synthetic data, generated to preview the design. No Garmin connection is used.</div>}
 
         <section className="sec" id="overview">
@@ -183,7 +184,7 @@ export default function Dashboard({ plan, cfg }) {
             {pred && <div className="chart-note">athletedata estimate: {pred.status === "no_estimate" ? "none yet. It needs a running threshold, so a 5K time trial or a 20 to 30 minute tempo will give it one." : pred.message || JSON.stringify(pred).slice(0, 200)}</div>}
             <div className="tw" style={{ marginTop: 10 }}><table className="race"><thead><tr><th>Checkpoint</th><th>Target</th><th>Note</th></tr></thead><tbody>{plan.splits.map((s) => <tr key={s.n}><td>{s.n}</td><td>{s.t}</td><td>{s.note}</td></tr>)}</tbody></table></div></div></div>
         </section>
-        <p className="foot">{cfg.footer}</p>
+        <p className="foot">{cfg.footer}{planInfo && planInfo.block ? " Plan: " + planInfo.block.name + ", version " + planInfo.block.version + "." : ""}</p>
       </main>
     </>
   );

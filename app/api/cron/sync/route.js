@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createHash, timingSafeEqual } from "crypto";
 import { getSetup, todayIn } from "../../../../lib/config";
 import { syncRange, syncBests, shift } from "../../../../lib/sync";
+import { closeBlocks } from "../../../../lib/store";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -16,6 +17,7 @@ export async function GET(req) {
     const setup = getSetup(), today = todayIn(setup.cfg.timezone);
     const r = await syncRange(setup, shift(today, -14), today);
     const b = await syncBests().catch((e) => ({ bests_error: String(e.message).slice(0, 120) }));
-    return NextResponse.json({ ok: true, ...r, ...b });
+    const c = await closeBlocks(today).catch((e) => ({ close_error: String(e.message).slice(0, 120) }));
+    return NextResponse.json({ ok: true, ...r, ...b, closed: c });
   } catch (e) { return NextResponse.json({ error: String(e.message || e).slice(0, 300) }, { status: 502 }); }
 }

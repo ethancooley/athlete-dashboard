@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import TopBar from "./TopBar";
+import PlanEditor from "./PlanEditor";
 
 const post = (url, body) => fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(async (r) => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "HTTP " + r.status); return j; });
 const monthsBetween = (from, to) => { const out = []; let s = from; while (s <= to) { const d = new Date(s + "T12:00:00Z"); const e = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0, 12)); const end = e.toISOString().slice(0, 10) < to ? e.toISOString().slice(0, 10) : to; out.push([s, end]); const n = new Date(e); n.setUTCDate(n.getUTCDate() + 1); s = n.toISOString().slice(0, 10); } return out; };
@@ -24,6 +25,12 @@ export default function AdminView() {
   async function doImport() {
     setBusy(true); setErr(""); setLog("");
     try { JSON.parse(text); const r = await post("/api/admin/import", JSON.parse(text)); say(`Imported ${r.blocks} blocks, ${r.races} races, ${r.plans} new plan versions.` + (r.skipped.length ? " Skipped: " + r.skipped.join(", ") : "")); }
+    catch (e) { setErr(e.message); }
+    setBusy(false); load();
+  }
+  async function closeNow() {
+    setBusy(true); setErr(""); setLog("");
+    try { const r = await post("/api/admin/sync", { close: true }); say(`Filled ${r.races} race time${r.races === 1 ? "" : "s"} and ${r.blocks} block result${r.blocks === 1 ? "" : "s"}.` + (r.notes.length ? " " + r.notes.join("; ") : "")); }
     catch (e) { setErr(e.message); }
     setBusy(false); load();
   }
@@ -52,7 +59,13 @@ export default function AdminView() {
           <div className="p"><h3>Import blocks, races and plans</h3>
             <p className="chart-note" style={{ marginTop: 0 }}>Paste JSON with <code>blocks</code>, <code>races</code> and <code>plans</code>. Same slug or id overwrites; an unchanged plan is not versioned twice.</p>
             <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder='{"blocks":[],"races":[],"plans":[]}' aria-label="Import JSON" />
+            <p className="chart-note">A block may include <code>settings</code> (<code>event</code>, <code>anchor</code>, <code>gates</code>, <code>goalPaceBand</code>, <code>trainStart</code>) that apply while it is the active block.</p>
             <p style={{ marginTop: 8 }}><input type="file" accept="application/json,.json" onChange={async (e) => { const f = e.target.files[0]; if (f) setText(await f.text()); }} /> <button onClick={doImport} disabled={busy || !text.trim()}>Import</button></p>
+          </div>
+          <PlanEditor />
+          <div className="p"><h3>Close finished blocks</h3>
+            <p className="chart-note" style={{ marginTop: 0 }}>Runs nightly. For each past race without a time, it takes the time from the run on race day that matches the distance, then writes the block's result if it is empty. Nothing already filled in is changed.</p>
+            <button onClick={closeNow} disabled={busy}>Run now</button>
           </div>
         </section>
       </main>
