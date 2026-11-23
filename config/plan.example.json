@@ -1,0 +1,20 @@
+{
+  "race": "2027-04-18",
+  "plan_start": "2027-01-04",
+  "phases": [{ "n": "Build", "w": "Weeks 1-2", "m": "30-34 mi", "t": "Example phase." }],
+  "splits": [],
+  "weeks": [
+    {
+      "num": 1, "title": "Week 1", "dates": "Jan 4 - Jan 10", "focus": "Build", "phase": 1, "planned": 30,
+      "days": [
+        { "date": "2027-01-04", "dow": "Mon", "label": "Jan 4", "miles": 0, "text": "Strength and easy swim", "type": "strength", "tag": "Strength + swim" },
+        { "date": "2027-01-05", "dow": "Tue", "label": "Jan 5", "miles": 6, "text": "6 mi with 3 at goal pace", "type": "key", "tag": "Quality" },
+        { "date": "2027-01-06", "dow": "Wed", "label": "Jan 6", "miles": 4, "text": "4 mi easy", "type": "norm", "tag": null },
+        { "date": "2027-01-07", "dow": "Thu", "label": "Jan 7", "miles": 5, "text": "5 mi steady", "type": "norm", "tag": null },
+        { "date": "2027-01-08", "dow": "Fri", "label": "Jan 8", "miles": 0, "text": "Rest", "type": "rest", "tag": null },
+        { "date": "2027-01-09", "dow": "Sat", "label": "Jan 9", "miles": 10, "text": "10 mi long run, easy", "type": "key", "tag": "Long run" },
+        { "date": "2027-01-10", "dow": "Sun", "label": "Jan 10", "miles": 5, "text": "5 mi easy", "type": "norm", "tag": null }
+      ]
+    }
+  ]
+}

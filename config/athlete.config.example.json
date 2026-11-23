@@ -1,0 +1,18 @@
+{
+  "title": "Training Dashboard",
+  "timezone": "America/Chicago",
+  "historyStart": "2026-01-01",
+  "trainStart": null,
+  "event": {
+    "name": "City Marathon",
+    "date": "2027-04-18",
+    "goalTime": "3:15:00",
+    "goalPace": "7:26",
+    "distanceKm": 42.195,
+    "lede": "Goal 3:15:00. Even pace from the first mile."
+  },
+  "anchor": { "label": "1:30:00 half", "name": "half marathon", "seconds": 5400, "distanceKm": 21.0975 },
+  "gates": { "hrvFloor": 65, "hrvDays": 2, "rhrDelta": 5 },
+  "goalPaceBand": [436, 454],
+  "footer": "Data from my Garmin watch through athletedata."
+}

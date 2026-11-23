@@ -1,0 +1,8 @@
+node_modules
+.next
+.env
+.env*.local
+# Personal configuration and plans stay out of git
+config/*.json
+!config/*.example.json
+*.local.json
