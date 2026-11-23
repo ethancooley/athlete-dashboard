@@ -2,6 +2,7 @@
 module.exports = {
   reactStrictMode: true,
   poweredByHeader: false,
+  experimental: { serverComponentsExternalPackages: ["pg", "@electric-sql/pglite"] },
   async headers() {
     return [{ source: "/(.*)", headers: [
       { key: "X-Frame-Options", value: "DENY" },

@@ -98,7 +98,7 @@ export default function Dashboard({ plan, cfg }) {
   const nav = (
     <header className="top"><div className="in">
       <div className="brand">{cfg.event.name}<span>{raceLabel} · goal {cfg.event.goalTime}</span></div>
-      <nav aria-label="Sections">{["overview", "training", "recovery", "runs", "race"].map((s) => <a key={s} href={"#" + s}>{s[0].toUpperCase() + s.slice(1)}</a>)}</nav>
+      <nav aria-label="Sections">{["overview", "training", "recovery", "runs", "race"].map((s) => <a key={s} href={"#" + s}>{s[0].toUpperCase() + s.slice(1)}</a>)}<a href="/history">History</a><a href="/records">Records</a></nav>
       <div className={"sync" + (err && !data ? " bad" : data ? " ok" : "")}>
         <span><span className="dot" />{data ? (data.source === "demo" ? "Demo data" : "Synced " + stamp(data.generatedAt)) : busy ? "Loading..." : "Not loaded"}</span>
         <button onClick={() => load(true)} disabled={busy}>Refresh</button><button onClick={logout}>Sign out</button>

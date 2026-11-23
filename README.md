@@ -8,6 +8,8 @@ quiet, fast view of the week, your recovery, each run and the race ahead.
 - **Recovery**: overnight HRV against its baseline and your gate, resting heart rate, sleep
 - **Runs**: every run, with a detail view: route map, pace, heart rate and elevation on one axis, splits, time in zone
 - **Race**: goal, checkpoints, and a Riegel projection from a recent race result
+- **History**: every week on record with your training blocks shaded and races marked, a card per block (miles, peak week, plan followed, result), and a detail view with plan vs actual, fitness and the plan as it was written
+- **Records**: race results and personal records by distance, progression charts, and Garmin best efforts kept separate from real results
 
 Next.js 14, ECharts, MapLibre. One password protects everything. Data is fetched server-side, so no key reaches the browser.
 
@@ -31,6 +33,26 @@ Open http://localhost:3000 and sign in with `demo`. You will see a generated sam
 3. **Secrets.** `DASH_PASSWORD` is what you type to sign in. `SESSION_SECRET` is a random string (`openssl rand -hex 32`).
 
 Copy `.env.example` to `.env.local` and fill it in.
+
+## History and records (needs Postgres)
+
+The live dashboard reads straight from your data source. History and Records read from a Postgres database that a sync keeps current.
+
+1. Add a Postgres database. On Vercel, Storage > Create Database > Neon, connected to the project. That sets `DATABASE_URL`. Locally, set `DATABASE_URL` yourself.
+2. Set `CRON_SECRET` to a random string. Vercel Cron (see `vercel.json`) calls `/api/cron/sync` nightly to refresh the last 14 days and best efforts.
+3. Open `/admin`, enter the date your history starts, and run the backfill. It loads one month at a time and is safe to repeat.
+4. In `/admin`, import your blocks, races and plans as JSON:
+
+```json
+{
+  "blocks": [{ "slug": "spring-half", "name": "Spring half build", "kind": "race-build", "start": "2026-01-05", "end": "2026-03-29", "race_date": "2026-03-29", "goal": "Sub 1:45", "result": "1:43:10" }],
+  "races":  [{ "id": "spring-half-2026", "date": "2026-03-29", "name": "City Half", "distance_km": 21.0975, "time_sec": 6190, "source": "official", "block": "spring-half" }],
+  "plans":  [{ "block": "spring-half", "note": "as published", "plan": { "weeks": [] } }]
+}
+```
+
+`source` is `official` or `watch`. A race without a `time_sec` and `planned: true` shows under Upcoming. Re-importing a changed plan stores a new version and keeps the old one. A block without a `start` is shown with an estimated 16-week window and flagged as estimated.
+Tables are created automatically on first use. Run `PGLITE=1 MOCK=1 npm run dev` to try the whole thing locally with an in-process database and synthetic data (demo mode also loads synthetic blocks).
 
 ## Configuration
 

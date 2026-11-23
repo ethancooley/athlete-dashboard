@@ -14,5 +14,5 @@ export async function middleware(req) {
   url.search = "";
   return NextResponse.redirect(url);
 }
-// Everything is private except the login page, its API, and static assets.
-export const config = { matcher: ["/((?!login|api/login|_next/static|_next/image|favicon.ico).*)"] };
+// Everything is private except the login page, its API, static assets, and /api/cron (which checks CRON_SECRET itself).
+export const config = { matcher: ["/((?!login|api/login|api/cron|_next/static|_next/image|favicon.ico).*)"] };
