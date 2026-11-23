@@ -63,3 +63,8 @@ nav a.on{color:var(--ink);background:var(--raised)}
 .log{font:12px/1.5 ui-monospace,monospace;color:var(--mut);white-space:pre-wrap;margin-top:8px}
 .prs .p{grid-column:auto}
 .admin .banner{margin-bottom:12px}
+
+.modal-back{position:fixed;inset:0;z-index:60;background:rgba(5,6,8,.72);display:flex;justify-content:center;align-items:flex-start;padding:max(16px,env(safe-area-inset-top)) 12px 24px;overflow-y:auto;overscroll-behavior:contain}
+.modal{position:relative;width:100%;max-width:1000px;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 16px 18px}
+.modal-x{position:sticky;top:0;float:right;z-index:5;background:var(--raised);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+.clk tr.r,tr.clk,.prs .p.clk{cursor:pointer}tr.clk:hover td{background:var(--raised)}.prs .p.clk:hover{border-color:var(--grey)}

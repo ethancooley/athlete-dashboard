@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import EChart from "./EChart";
 import TopBar from "./TopBar";
 import { f1, hms, paceMi, shortDate } from "../lib/fmt";
+import ActivityModal from "./ActivityModal";
 import { blockStats, blockWindow, planWeeks, paceOf } from "../lib/history";
 import { everyWeekOption, blockWeeksOption, blockFitnessOption } from "../lib/historyCharts";
 
@@ -25,16 +26,16 @@ function Card({ b, st, race, sel, onClick }) {
 }
 
 function Detail({ b, st, plan, ver, data }) {
-  const pw = planWeeks(plan);
+  const pw = planWeeks(plan), [open, setOpen] = useState(null), [all, setAll] = useState(false);
   const wOpt = useMemo(() => blockWeeksOption(b, data.acts, plan, data.today), [b, data, plan]);
   const fOpt = useMemo(() => blockFitnessOption(b, data.daily, data.today), [b, data]);
-  const longest = st.runs.slice().sort((x, y) => y.mi - x.mi).slice(0, 8);
+  const sorted = st.runs.slice().sort((x, y) => y.mi - x.mi), longest = all ? sorted : sorted.slice(0, 8);
   return (
     <div className="grid" style={{ marginTop: 14 }}>
       <div className="p s7"><h3>Weekly miles <small>{st.hasPlan ? "plan and actual" : "actual"}</small></h3><EChart option={wOpt} height={240} /></div>
       <div className="p s5"><h3>Fitness and fatigue <small>CTL and ATL</small></h3>{fOpt ? <EChart option={fOpt} height={240} /> : <div className="empty">No fitness data for this block.</div>}</div>
-      <div className="p s6"><h3>Longest runs</h3><div className="tw"><table><thead><tr><th style={{ textAlign: "left" }}>Run</th><th>Miles</th><th>Pace</th><th>Avg HR</th></tr></thead>
-        <tbody>{longest.length ? longest.map((a) => <tr key={a.id}><td style={{ textAlign: "left" }}>{a.name}<span style={{ display: "block", color: "var(--dim)", fontSize: 11 }}>{shortDate(a.date)}, {a.date.slice(0, 4)}</span></td><td>{f1(a.mi)}</td><td>{paceMi(a.sec / a.mi)}</td><td>{a.hr ? Math.round(a.hr) : "-"}</td></tr>) : <tr><td colSpan="4" className="empty">No runs in this window</td></tr>}</tbody></table></div></div>
+      <div className="p s6"><h3>{all ? "All runs" : "Longest runs"} <small>select one for the map and details</small></h3><div className="tw"><table><thead><tr><th style={{ textAlign: "left" }}>Run</th><th>Miles</th><th>Pace</th><th>Avg HR</th></tr></thead>
+        <tbody>{longest.length ? longest.map((a) => <tr key={a.id} className="clk" tabIndex={0} onClick={() => setOpen(a)} onKeyDown={(e) => e.key === "Enter" && setOpen(a)}><td style={{ textAlign: "left" }}>{a.name}<span style={{ display: "block", color: "var(--dim)", fontSize: 11 }}>{shortDate(a.date)}, {a.date.slice(0, 4)}</span></td><td>{f1(a.mi)}</td><td>{paceMi(a.sec / a.mi)}</td><td>{a.hr ? Math.round(a.hr) : "-"}</td></tr>) : <tr><td colSpan="4" className="empty">No runs in this window</td></tr>}</tbody></table></div>{sorted.length > 8 && <p style={{ margin: "8px 0 0" }}><button className="btn" onClick={() => setAll(!all)}>{all ? "Show the longest 8" : "Show all " + sorted.length + " runs"}</button></p>}</div>
       <div className="p s6"><h3>Block summary</h3>
         <div className="tiles" style={{ margin: 0 }}>
           <div className="tile"><b>{st.weeks}</b><span>Weeks</span></div><div className="tile"><b>{st.dataDays}</b><span>Days with a run</span></div>
@@ -46,6 +47,7 @@ function Detail({ b, st, plan, ver, data }) {
       {pw.length > 0 && <div className="p" style={{ gridColumn: "span 12" }}><h3>The plan, week by week <small>{pw.length} weeks as planned</small></h3>
         <div className="tw"><table><thead><tr><th style={{ textAlign: "left" }}>Week</th><th style={{ textAlign: "left" }}>Focus</th><th>Plan mi</th><th>Ran mi</th></tr></thead>
           <tbody>{pw.map((w) => { const ran = data.acts.filter((a) => a.run && a.date >= w.start && a.date <= w.end).reduce((s, a) => s + a.mi, 0); const past = w.end <= data.today; return <tr key={w.start}><td style={{ textAlign: "left" }}>{w.title}<span style={{ display: "block", color: "var(--dim)", fontSize: 11 }}>{shortDate(w.start)} to {shortDate(w.end)}</span></td><td style={{ textAlign: "left" }}>{w.focus || ""}</td><td>{w.planned}</td><td>{past || ran > 0 ? f1(ran) : "-"}</td></tr>; })}</tbody></table></div></div>}
+      {open && <ActivityModal run={open} band={null} onClose={() => setOpen(null)} />}
     </div>
   );
 }

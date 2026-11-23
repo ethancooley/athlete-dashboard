@@ -1,13 +1,12 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import dynamic from "next/dynamic";
 import EChart from "./EChart";
 import { C } from "../lib/theme";
 import { f1, hms, paceMi, shortDate, stamp } from "../lib/fmt";
 import { allDays, weekOf, status, weekMiles, dayActs, gate } from "../lib/plan";
-import { weeksOption, loadOption, hrvOption, rhrOption, sleepOption, runOption } from "../lib/charts";
+import { weeksOption, loadOption, hrvOption, rhrOption, sleepOption } from "../lib/charts";
+import ActivityModal from "./ActivityModal";
 
-const RouteMap = dynamic(() => import("./RouteMap"), { ssr: false, loading: () => <div className="skeleton" style={{ height: 340 }} /> });
 
 function actLine(a) { const p = []; if (a.mi > 0.05) { p.push(f1(a.mi) + " mi", paceMi(a.sec / a.mi) + "/mi"); if (a.hr) p.push(Math.round(a.hr) + " bpm"); } if (a.swim) p.push("swim"); if (a.lift) p.push("lift"); return p.join(" · "); }
 const dayTitle = (d) => (d.miles > 0 ? d.miles + " mi" + (d.tag ? " · " + d.tag : "") : d.type === "strength" ? "Lift and swim" : "Rest");
@@ -29,44 +28,6 @@ function DayCard({ d, isToday, acts, today }) {
       <div className="d"><span>{d.dow} {d.label}</span>{s && <span className={"chip " + s.k}>{s.t}</span>}</div>
       <div className="w"><b>{dayTitle(d)}</b>{d.text}</div>
       {a && actLine(a) && <div className="act">{actLine(a)}</div>}
-    </div>
-  );
-}
-
-function parseLaps(lines) {
-  return (lines || []).map((l) => { const m = /^#(\d+)\s+\S+\s+\[(\w+)\]\s+(\S+)\s+([\d.]+)km\s+(\d+):(\d+)\/km\s+HR(\d+)\/(\d+)\s+cad(\d+)/.exec(l); if (!m || +m[4] < 0.2) return null; return { n: +m[1], dur: m[3], mi: +m[4] / 1.609344, pace: (+m[5] * 60 + +m[6]) * 1.609344, hr: +m[7], maxhr: +m[8], cad: +m[9] }; }).filter(Boolean);
-}
-const Tile = ({ v, l }) => (v == null || v === "" ? null : <div className="tile"><b>{v}</b><span>{l}</span></div>);
-
-function RunDetail({ run, band }) {
-  const [d, setD] = useState(null), [err, setErr] = useState("");
-  useEffect(() => {
-    let dead = false; setD(null); setErr("");
-    fetch("/api/activity/" + run.id).then((r) => r.json().then((j) => ({ ok: r.ok, j }))).then(({ ok, j }) => { if (dead) return; if (!ok) setErr(j.error || "Could not load this run."); else setD(j); }).catch(() => !dead && setErr("Could not load this run."));
-    return () => { dead = true; };
-  }, [run.id]);
-  const opt = useMemo(() => (d && d.points && d.points.length > 2 ? runOption(d.points, band) : null), [d]);
-  if (err) return <div className="empty">{err}</div>;
-  if (!d) return <div className="skeleton" style={{ height: 380 }} />;
-  const s = d.session || {}, laps = parseLaps(d.laps);
-  return (
-    <div>
-      <div className="lab-head"><h4>{run.name}</h4><span>{shortDate(run.date)} · {f1(run.mi)} mi · {hms(run.sec)} · {paceMi(run.sec / run.mi)}/mi</span></div>
-      {d.demo && <div className="banner" style={{ marginTop: 10 }}>Demo mode: synthetic run, generated for the preview.</div>}
-      <div className="tiles">
-        <Tile v={s.avg_heart_rate ? s.avg_heart_rate + " bpm" : null} l="Average HR" /><Tile v={s.total_training_effect} l="Aerobic effect" /><Tile v={s.training_load_peak != null ? f1(s.training_load_peak) : null} l="Training load" />
-        <Tile v={s.avg_cadence ? s.avg_cadence + " spm" : null} l="Cadence" /><Tile v={s.avg_stance_time ? Math.round(s.avg_stance_time) + " ms" : null} l="Ground contact" /><Tile v={s.avg_vertical_oscillation ? f1(s.avg_vertical_oscillation / 10) + " cm" : null} l="Vertical oscillation" />
-        <Tile v={s.avg_step_length ? (s.avg_step_length / 1000).toFixed(2) + " m" : null} l="Step length" /><Tile v={s.avg_power ? s.avg_power + " W" : null} l="Average power" />
-      </div>
-      <div className="grid">
-        <div className="s5 p" style={{ gridColumn: "span 12" }}><h3>Route <small>colored by speed</small></h3><RouteMap points={d.points || []} /></div>
-        <div className="p" style={{ gridColumn: "span 12" }}><h3>Pace, heart rate and elevation <small>shaded = goal pace ({paceMi(band[0])} to {paceMi(band[1])}/mi)</small></h3>
-          {opt ? <EChart option={opt} height={360} /> : <div className="empty">No stream data for this run{d.streamStatus ? " (" + d.streamStatus + ")" : ""}.</div>}</div>
-        <div className="p s7"><h3>Splits</h3><div className="tw"><table><thead><tr><th>#</th><th>Mi</th><th>Time</th><th>Pace</th><th>HR avg / max</th><th>Cadence</th></tr></thead>
-          <tbody>{laps.length ? laps.map((l) => <tr key={l.n}><td>{l.n}</td><td>{l.mi.toFixed(2)}</td><td>{l.dur}</td><td>{paceMi(l.pace)}</td><td>{l.hr} / {l.maxhr}</td><td>{l.cad}</td></tr>) : <tr><td colSpan="6" className="empty">No laps recorded</td></tr>}</tbody></table></div></div>
-        <div className="p s5"><h3>Time in heart-rate zones</h3>
-          {d.zones ? Object.keys(d.zones).sort().map((k) => <div className="zrow" key={k}><span>{k.toUpperCase()}</span><div className="zbar"><i style={{ width: d.zones[k].pct + "%" }} /></div><span>{d.zones[k].time} · {d.zones[k].pct}%</span></div>) : <div className="empty">No zone data</div>}</div>
-      </div>
     </div>
   );
 }
@@ -167,13 +128,13 @@ export default function Dashboard({ plan, cfg, planInfo }) {
         </section>
 
         <section className="sec" id="runs">
-          <h2>Runs</h2><p className="lede">Every run from Garmin. Select one for the route, pace, heart rate, splits and zones.</p>
+          <h2>Runs</h2><p className="lede">Every run from Garmin. Select one to open the route, pace, heart rate, splits and zones.</p>
           <div className="grid"><div className="p"><div className="tw"><table className="runs"><thead><tr><th>Run</th><th>Miles</th><th>Pace /mi</th><th>Avg HR</th><th>Max HR</th><th>Power</th><th>Climb ft</th></tr></thead>
             <tbody>{runs.length ? runs.map((a) => (
               <tr key={a.id} className={"r" + (a.id === sel ? " sel" : "")} tabIndex={0} onClick={() => setSel(a.id)} onKeyDown={(e) => e.key === "Enter" && setSel(a.id)}>
                 <td>{a.name}<span>{shortDate(a.date)}{a.type === "TREADMILL_RUNNING" ? " · treadmill" : ""}</span></td><td>{f1(a.mi)}</td><td>{paceMi(a.sec / a.mi)}</td><td>{a.hr || "-"}</td><td>{a.maxhr || "-"}</td><td>{a.watts ? a.watts + " W" : "-"}</td><td>{a.elev != null ? Math.round(a.elev) : "-"}</td></tr>
             )) : <tr><td colSpan="7" className="empty">No runs yet</td></tr>}</tbody></table></div></div>
-            {selRun && <div className="p" id="detail"><RunDetail run={selRun} band={cfg.goalPaceBand} /></div>}</div>
+            {selRun && <ActivityModal run={selRun} band={cfg.goalPaceBand} onClose={() => setSel(null)} />}</div>
         </section>
 
         <section className="sec" id="race">
